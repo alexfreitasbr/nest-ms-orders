@@ -1,7 +1,13 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { PrismaClient } from '../../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -19,19 +25,28 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     this.logger.log('OrdersService connected to the database');
   }
 
-  create(createOrderDto: CreateOrderDto) {
-    return 'This action adds a new order';
+  async create(createOrderDto: CreateOrderDto) {
+    return await this.order.create({ data: createOrderDto });
   }
 
-  findAll() {
-    return `This action returns all orders`;
+  async findAll() {
+    return await this.order.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns find one #${id} order`;
+  async findOne(id: string) {
+    const order = await this.order.findUnique({ where: { id } });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    return order;
   }
 
-  changeOrderStatus(id: number) {
-    return `This action returns change #${id} order`;
+  async changeOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {
+    await this.findOne(id);
+
+    return await this.order.update({
+      where: { id },
+      data: updateOrderDto,
+    });
   }
 }
