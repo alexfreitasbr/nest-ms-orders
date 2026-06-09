@@ -24,6 +24,7 @@ export class OrdersController {
 
   @MessagePattern('changeOrderStatus')
   changeOrderStatus(@Payload() id: number) {
-    return this.ordersService.findOne(id);
+    console.log(id);
+    return this.ordersService.changeOrderStatus(id);
   }
 }
