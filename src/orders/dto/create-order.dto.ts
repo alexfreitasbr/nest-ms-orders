@@ -1,6 +1,4 @@
 import {
-  IsBoolean,
-  IsDate,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -19,6 +17,10 @@ export class CreateOrderDto {
   @IsNumber()
   @IsPositive()
   totalAmount: number;
+
+  @IsIn(OrderStatusList)
+  @IsOptional()
+  status?: OrdersStatus;
 
   @IsInt()
   @IsNumber()

@@ -30,7 +30,7 @@ export class UpdateOrderDto {
 
   @IsIn(OrderStatusList)
   @IsOptional()
-  status?: OrdersStatus;
+  status?: OrdersStatus = OrdersStatus.PENDING;
 
   @IsBoolean()
   @IsOptional()
