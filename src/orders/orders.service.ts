@@ -5,6 +5,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { RpcException } from '@nestjs/microservices';
 import { PaginationOrderDto } from 'src/common/dto/pagination-order.dto';
+import { UUID } from 'crypto';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -93,7 +94,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     return order;
   }
 
-  async changeOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {
+  async changeOrderStatus(id: UUID, updateOrderDto: UpdateOrderDto) {
     await this.findOne(id);
     const order = await this.order.update({
       where: { id },
