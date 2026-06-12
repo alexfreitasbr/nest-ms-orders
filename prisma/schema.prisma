@@ -14,11 +14,11 @@ datasource db {
 }
 
 enum OrdersStatus {
-  PENDING
-  CONFIRMED
-  SHIPPED
-  DELIVERED
   CANCELLED
+  CONFIRMED
+  DELIVERED
+  PENDING
+  SHIPPED
 }
 
 model Order {
