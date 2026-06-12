@@ -1,19 +1,31 @@
-import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PaginationOrderDto } from 'src/common/dto/pagination-order.dto';
 import { UUID } from 'crypto';
+import { PRODUCTS_SERVICE } from 'src/config';
+import { catchError } from 'rxjs';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
-  constructor() {
+  constructor(
+    @Inject(PRODUCTS_SERVICE)
+    private readonly productsClient: ClientProxy,
+  ) {
     const adapter = new PrismaPg({
       connectionString: process.env.DATABASE_URL,
     });
     super({ adapter });
+    // this.productsClient = new ClientProxy('');
   }
 
   private readonly logger = new Logger('OrdersService');
@@ -23,16 +35,28 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     this.logger.log('OrdersService connected to the database');
   }
 
-  async create(createOrderDto: CreateOrderDto) {
-    const order = await this.order.create({ data: createOrderDto });
+  create(createOrderDto: CreateOrderDto) {
+    const productIds = Array.from(
+      new Set(createOrderDto.items.map((item) => item.productId)),
+    );
+    return this.productsClient
+      .send({ cmd: 'validateProducts' }, productIds)
+      .pipe(
+        catchError((err) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          throw new RpcException(err);
+        }),
+      );
+    // return { service: 'order micro server', createOrderDto: createOrderDto };
+    // const order = await this.order.create({ data: createOrderDto });
 
-    if (!order) {
-      throw new RpcException({
-        message: `Order with id ${createOrderDto.userId} do not created`,
-        status: HttpStatus.BAD_REQUEST,
-      });
-    }
-    return order;
+    // if (!order) {
+    //   throw new RpcException({
+    //     message: `Order with id ${createOrderDto.userId} do not created`,
+    //     status: HttpStatus.BAD_REQUEST,
+    //   });
+    // },
+    // return order;
   }
 
   async findAll(paginationOrderDto: PaginationOrderDto) {
