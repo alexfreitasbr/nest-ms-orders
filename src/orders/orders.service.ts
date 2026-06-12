@@ -13,7 +13,8 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PaginationOrderDto } from 'src/common/dto/pagination-order.dto';
 import { UUID } from 'crypto';
 import { PRODUCTS_SERVICE } from 'src/config';
-import { catchError } from 'rxjs';
+import { Product } from 'src/products/products.interface';
+import { catchError, firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -35,18 +36,21 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     this.logger.log('OrdersService connected to the database');
   }
 
-  create(createOrderDto: CreateOrderDto) {
+  async create(createOrderDto: CreateOrderDto) {
     const productIds = Array.from(
       new Set(createOrderDto.items.map((item) => item.productId)),
     );
-    return this.productsClient
-      .send({ cmd: 'validateProducts' }, productIds)
-      .pipe(
-        catchError((err) => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          throw new RpcException(err);
-        }),
-      );
+    const products = await firstValueFrom(
+      this.productsClient
+        .send<Product[]>({ cmd: 'validateProducts' }, productIds)
+        .pipe(
+          catchError((err) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            throw new RpcException(err);
+          }),
+        ),
+    );
+    return products;
     // return { service: 'order micro server', createOrderDto: createOrderDto };
     // const order = await this.order.create({ data: createOrderDto });
 
