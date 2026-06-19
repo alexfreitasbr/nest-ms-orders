@@ -40,7 +40,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     const productIds = Array.from(
       new Set(createOrderDto.items.map((item) => item.productId)),
     );
-    const products = await firstValueFrom(
+    const products: Product[] = await firstValueFrom(
       this.productsClient
         .send<Product[]>({ cmd: 'validateProducts' }, productIds)
         .pipe(
@@ -50,17 +50,21 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
           }),
         ),
     );
-    return products;
-    // return { service: 'order micro server', createOrderDto: createOrderDto };
-    // const order = await this.order.create({ data: createOrderDto });
 
-    // if (!order) {
-    //   throw new RpcException({
-    //     message: `Order with id ${createOrderDto.userId} do not created`,
-    //     status: HttpStatus.BAD_REQUEST,
-    //   });
-    // },
-    // return order;
+    const totalAmount = createOrderDto.items.reduce((access, orderItem) => {
+      const product = products.find((item) => item.id === orderItem.productId);
+      return access + (product?.price || 0) * orderItem.quantity;
+    }, 0);
+
+    const totalItems = createOrderDto.items.reduce((access, orderItem) => {
+      return access + orderItem.quantity;
+    }, 0);
+
+
+
+
+    
+    return { totalAmount, totalItems };
   }
 
   async findAll(paginationOrderDto: PaginationOrderDto) {
