@@ -15,8 +15,9 @@ export class OrdersController {
     return this.ordersService.create(createOrderDto);
   }
 
-  @MessagePattern({ cmd: 'validateProduct' })
+  @MessagePattern('findAllOrders')
   findAll(@Payload() paginationOrderDto: PaginationOrderDto) {
+    console.log('findAll', paginationOrderDto);
     return this.ordersService.findAll(paginationOrderDto);
   }
 

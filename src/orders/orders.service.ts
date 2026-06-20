@@ -12,21 +12,21 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PaginationOrderDto } from 'src/common/dto/pagination-order.dto';
 import { UUID } from 'crypto';
-import { PRODUCTS_SERVICE } from 'src/config';
+import { NATS_SERVICE } from 'src/config';
 import { Product } from 'src/products/products.interface';
 import { catchError, firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
   constructor(
-    @Inject(PRODUCTS_SERVICE)
-    private readonly productsClient: ClientProxy,
+    @Inject(NATS_SERVICE)
+    private readonly client: ClientProxy,
   ) {
     const adapter = new PrismaPg({
       connectionString: process.env.DATABASE_URL,
     });
     super({ adapter });
-    // this.productsClient = new ClientProxy('');
+    // this.client = new ClientProxy('');
   }
 
   private readonly logger = new Logger('OrdersService');
@@ -41,14 +41,12 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
       new Set(createOrderDto.items.map((item) => item.productId)),
     );
     const products: Product[] = await firstValueFrom(
-      this.productsClient
-        .send<Product[]>({ cmd: 'validateProducts' }, productIds)
-        .pipe(
-          catchError((err) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            throw new RpcException(err);
-          }),
-        ),
+      this.client.send<Product[]>({ cmd: 'validateProducts' }, productIds).pipe(
+        catchError((err) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          throw new RpcException(err);
+        }),
+      ),
     );
 
     const productById = new Map(
@@ -174,14 +172,12 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
 
     const productIds = orderItems.map((orderItem) => orderItem.productId);
     const products: Product[] = await firstValueFrom(
-      this.productsClient
-        .send<Product[]>({ cmd: 'validateProducts' }, productIds)
-        .pipe(
-          catchError((err) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            throw new RpcException(err);
-          }),
-        ),
+      this.client.send<Product[]>({ cmd: 'validateProducts' }, productIds).pipe(
+        catchError((err) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          throw new RpcException(err);
+        }),
+      ),
     );
 
     const productById = new Map(
